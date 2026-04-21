@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: GCP Vertex AI - Gemini
+  description: Template API for Vertex AI Gemini model inference via APIM
+  version: "1.0.0"
+
+servers:
+  - url: https://us-central1-aiplatform.googleapis.com
+
+paths:
+  /generate:
+    post:
+      operationId: generateContent
+      summary: Generate content (non-streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateContentRequest"
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateContentResponse"
+
+  /stream:
+    post:
+      operationId: streamGenerateContent
+      summary: Generate content (streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateContentRequest"
+      responses:
+        "200":
+          description: Streamed response
+
+components:
+  schemas:
+    GenerateContentRequest:
+      type: object
+      required:
+        - contents
+      properties:
+        contents:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum:
+                  - user
+                  - model
+              parts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    text:
+                      type: string
+        generationConfig:
+          type: object
+          properties:
+            temperature:
+              type: number
+            maxOutputTokens:
+              type: integer
+            topP:
+              type: number
+            topK:
+              type: integer
+
+    GenerateContentResponse:
+      type: object
+      properties:
+        candidates:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: object
+              finishReason:
+                type: string
+        usageMetadata:
+          type: object
+          properties:
+            promptTokenCount:
+              type: integer
+            candidatesTokenCount:
+              type: integer

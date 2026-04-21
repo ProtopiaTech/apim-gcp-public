@@ -1,0 +1,35 @@
+<!--
+  Policy fragment: gcp-wif-token-exchange
+  Prerequisites:
+    - Named value: gcp-wif-provider (full WIF provider resource name)
+    - Named value: gcp-service-account (target SA email)
+    - Named value: apim-client-id (Entra ID app registration client ID)
+    - Named value: gcp-token-audience (STS audience)
+-->
+<fragment>
+	<authentication-managed-identity resource="{{backend-app-id-uri}}" output-token-variable-name="azure-ad-token" />
+	<send-request mode="new" response-variable-name="gcp-sts-response" timeout="10">
+		<set-url>{{sts-google-api-url}}</set-url>
+		<set-method>POST</set-method>
+		<set-header name="Content-Type" exists-action="override">
+			<value>application/x-www-form-urlencoded</value>
+		</set-header>
+		<set-body>@{
+            var azureToken = (string)context.Variables["azure-ad-token"];
+            var audience = "//iam.googleapis.com/projects/{{gcp-project-number}}/locations/global/workloadIdentityPools/{{gcp-workload-identity-id}}/providers/{{gcp-workload-identity-provider-name}}";
+            return $"grant_type=urn:ietf:params:oauth:grant-type:token-exchange"
+                + $"&subject_token_type=urn:ietf:params:oauth:token-type:jwt"
+                + $"&requested_token_type=urn:ietf:params:oauth:token-type:access_token"
+                + $"&audience={System.Net.WebUtility.UrlEncode(audience)}"
+                + $"&scope={System.Net.WebUtility.UrlEncode("https://www.googleapis.com/auth/cloud-platform")}"
+                + $"&subject_token={System.Net.WebUtility.UrlEncode(azureToken)}";
+        }</set-body>
+	</send-request>
+	<set-variable name="gcp-federated-token" value="@{
+        var body = ((IResponse)context.Variables["gcp-sts-response"]).Body.As<JObject>();
+        return (string)body["access_token"];
+    }" />
+	<set-header name="Authorization" exists-action="override">
+		<value>@("Bearer " + (string)context.Variables["gcp-federated-token"])</value>
+	</set-header>
+</fragment>

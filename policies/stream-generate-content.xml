@@ -1,0 +1,16 @@
+<policies>
+  <inbound>
+    <base />
+    <include-fragment fragment-id="gcp-wif-token-exchange" />
+    <rewrite-uri template="/v1/projects/{{project}}/locations/{{region}}/publishers/google/models/{{model}}:streamGenerateContent" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
