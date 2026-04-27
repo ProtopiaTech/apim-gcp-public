@@ -1,0 +1,38 @@
+<policies>
+    <inbound>
+        <base />
+        <send-request mode="new" response-variable-name="catFactResponse" timeout="10" ignore-error="false">
+            <set-url>https://catfact.ninja/fact</set-url>
+            <set-method>GET</set-method>
+        </send-request>
+        <set-variable name="catFact" value="@{
+            var response = ((IResponse)context.Variables["catFactResponse"]).Body.As<JObject>();
+            return response["fact"].ToString();
+        }" />
+        <set-variable name="catFactLength" value="@{
+            var response = ((IResponse)context.Variables["catFactResponse"]).Body.As<JObject>(preserveContent: true);
+            return response["length"].ToString();
+        }" />
+        <set-header name="X-Cat-Fact" exists-action="override">
+            <value>@((string)context.Variables["catFact"])</value>
+        </set-header>
+        <set-header name="X-Cat-Fact-Length" exists-action="override">
+            <value>@((string)context.Variables["catFactLength"])</value>
+        </set-header>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+        <set-header name="X-Cat-Fact" exists-action="override">
+            <value>@((string)context.Variables["catFact"])</value>
+        </set-header>
+        <set-header name="X-Cat-Fact-Length" exists-action="override">
+            <value>@((string)context.Variables["catFactLength"])</value>
+        </set-header>
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
