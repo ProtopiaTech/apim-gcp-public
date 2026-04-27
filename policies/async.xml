@@ -1,0 +1,33 @@
+<policies>
+    <inbound>
+        <base />
+        <send-one-way-request mode="new">
+            <set-url>https://webhook.site/YOUR-UUID-HERE</set-url>
+            <set-method>POST</set-method>
+            <set-header name="Content-Type" exists-action="override">
+                <value>application/json</value>
+            </set-header>
+            <set-body>@{
+                return new JObject(
+                    new JProperty("timestamp", DateTime.UtcNow.ToString("o")),
+                    new JProperty("operation", context.Operation.Name),
+                    new JProperty("apiName", context.Api.Name),
+                    new JProperty("requestId", context.RequestId),
+                    new JProperty("clientIp", context.Request.IpAddress),
+                    new JProperty("method", context.Request.Method),
+                    new JProperty("url", context.Request.Url.ToString()),
+                    new JProperty("subscriptionId", context.Subscription?.Id ?? "anonymous")
+                ).ToString();
+            }</set-body>
+        </send-one-way-request>
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>
